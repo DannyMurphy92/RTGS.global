@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using RtgsGlobal.TechTest.Api.Models.Exceptions;
 using RtgsGlobal.TechTest.Api.Services.Interfaces;
 
 namespace RtgsGlobal.TechTest.Api.Controllers;
@@ -19,62 +20,65 @@ public class AccountController : ControllerBase
 	[HttpPost("{accountIdentifier}", Name = "Deposit")]
 	public IActionResult Deposit(string accountIdentifier, [FromBody] decimal amount)
 	{
-		if (!DoesAccountExist(accountIdentifier))
+		try
 		{
-			return NotFound($"Account {accountIdentifier} not found");
+			_accountProvider.Deposit(accountIdentifier, amount);
+			return Ok();
 		}
-
-		if (amount < 0)
+		catch (AccountNotFoundException ex)
 		{
-			return BadRequest("Cannot deposit negative amount");
+			return NotFound($"Account {ex._accountIdentifier} not found");
 		}
-
-		_accountProvider.Deposit(accountIdentifier, amount);
-		return Ok();
+		catch (InvalidDepositException ex)
+		{
+			return BadRequest(ex.Message);
+		}
 	}
 
 	[HttpPost("{accountIdentifier}/withdraw", Name = "Withdrawal")]
 	public IActionResult Withdraw(string accountIdentifier, [FromBody] decimal amount)
 	{
-		if (!DoesAccountExist(accountIdentifier))
+		try
 		{
-			return NotFound($"Account {accountIdentifier} not found");
+			_accountProvider.Withdraw(accountIdentifier, amount);
+			return Ok();
 		}
-		_accountProvider.Withdraw(accountIdentifier, amount);
-		return Ok();
+		catch (AccountNotFoundException ex)
+		{
+			return NotFound($"Account {ex._accountIdentifier} not found");
+		}
 	}
 
 	[HttpPost("transfer", Name = "Transfer")]
 	public IActionResult Transfer(AccountTransferDto transfer)
 	{
-		if (!DoesAccountExist(transfer.CreditorAccountIdentifier))
+		try
 		{
-			return NotFound($"Account {transfer.CreditorAccountIdentifier} not found");
+			_transferService.Transfer(transfer);
+			return Accepted();
 		}
-
-		if (!DoesAccountExist(transfer.DebtorAccountIdentifier))
+		catch (AccountNotFoundException ex)
 		{
-			return NotFound($"Account {transfer.DebtorAccountIdentifier} not found");
+			return NotFound($"Account {ex._accountIdentifier} not found");
 		}
-
-		if (transfer.CreditorAccountIdentifier == transfer.DebtorAccountIdentifier)
+		catch (InvalidTransferException ex)
 		{
-			return BadRequest("Cannot transfer between the same account");
+			return BadRequest(ex.Message);
 		}
-
-		_transferService.Transfer(transfer);
-		return Accepted();
 	}
 
 	[HttpGet("{accountIdentifier}", Name = "GetBalance")]
 	public IActionResult Get(string accountIdentifier)
 	{
-		if (!DoesAccountExist(accountIdentifier))
+		try
 		{
-			return NotFound($"Account {accountIdentifier} not found");
+			var balance = _accountProvider.GetBalance(accountIdentifier);
+			return Ok(balance);
 		}
-		var balance = _accountProvider.GetBalance(accountIdentifier);
-		return Ok(balance);
+		catch (AccountNotFoundException ex)
+		{
+			return NotFound($"Account {ex._accountIdentifier} not found");
+		}
 	}
 
 	private bool DoesAccountExist(string accountIdentifier) => _accountProvider.AccountExists(accountIdentifier);
