@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using RtgsGlobal.TechTest.Api.Services.Interfaces;
 
 namespace RtgsGlobal.TechTest.Api.Controllers;
 
@@ -7,47 +8,37 @@ namespace RtgsGlobal.TechTest.Api.Controllers;
 public class AccountController : ControllerBase
 {
 	private readonly IAccountProvider _accountProvider;
+	private readonly ITransferService _transferService;
 
-	public AccountController(IAccountProvider accountProvider)
+	public AccountController(IAccountProvider accountProvider, ITransferService transferService)
 	{
 		_accountProvider = accountProvider;
+		_transferService = transferService;
 	}
 
 	[HttpPost("{accountIdentifier}", Name = "Deposit")]
-	public IActionResult Deposit(string accountIdentifier, [FromBody] float amount)
+	public IActionResult Deposit(string accountIdentifier, [FromBody] decimal amount)
 	{
 		_accountProvider.Deposit(accountIdentifier, amount);
 		return Ok();
 	}
 
 	[HttpPost("{accountIdentifier}/withdraw", Name = "Withdrawal")]
-	public IActionResult Withdraw(string accountIdentifier, [FromBody] float amount)
+	public IActionResult Withdraw(string accountIdentifier, [FromBody] decimal amount)
 	{
 		_accountProvider.Withdraw(accountIdentifier, amount);
 		return Ok();
 	}
 
 	[HttpPost("transfer", Name = "Transfer")]
-	public IActionResult Transfer(MyTransferDto transfer)
+	public IActionResult Transfer(AccountTransferDto transfer)
 	{
-		_accountProvider.Transfer(transfer);
+		_transferService.Transfer(transfer);
 		return Accepted();
 	}
 
 	[HttpGet("{accountIdentifier}", Name = "GetBalance")]
-	public MyBalance Get(string accountIdentifier) => _accountProvider.GetBalance(accountIdentifier);
+	public AccountBalance Get(string accountIdentifier) => _accountProvider.GetBalance(accountIdentifier);
 }
 
-public class MyTransferDto
-{
-	public MyTransferDto(string debtorAccountIdentifier, string creditorAccountIdentifier, float amount)
-	{
-		DebtorAccountIdentifier = debtorAccountIdentifier;
-		CreditorAccountIdentifier = creditorAccountIdentifier;
-		Amount = amount;
-	}
 
-	public string DebtorAccountIdentifier { get; set; }
-	public string CreditorAccountIdentifier { get; set; }
-	public float Amount { get; set; }
-}
