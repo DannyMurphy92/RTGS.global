@@ -15,8 +15,6 @@ public class AccountProvider : IAccountProvider
 
 	public void Deposit(string accountIdentifier, decimal amount) => AddTransaction(accountIdentifier, amount);
 
-
-
 	public void Withdraw(string accountIdentifier, decimal amount) => AddTransaction(accountIdentifier, -1 * amount);
 
 	private void AddTransaction(string accountIdentifier, decimal amount)
@@ -24,6 +22,11 @@ public class AccountProvider : IAccountProvider
 		AccountBalance accountBalance = _accounts[accountIdentifier];
 		_accounts[accountIdentifier] =
 			accountBalance with { Balance = accountBalance.Balance + amount };
+	}
+
+	public bool AccountExists(string accountIdentifier)
+	{
+		return _accounts.ContainsKey(accountIdentifier);
 	}
 }
 

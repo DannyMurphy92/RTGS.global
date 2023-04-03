@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
@@ -70,5 +71,35 @@ public class BankAccountTests : IClassFixture<WebApplicationFactory<Program>>
 
 		Assert.Equal(-1000, accountA.Balance);
 		Assert.Equal(1000, accountB.Balance);
+	}
+
+	[Fact]
+	public async Task GivenAccountDoesNotExistWithNoTransactions_ThenReturns404()
+	{
+		var result = await _client.GetAsync("/account/not-an-account");
+		Assert.Equal(HttpStatusCode.NotFound, result.StatusCode);
+	}
+
+	[Fact]
+	public async Task GivenAccountDoesNotExist_WhenDepositIsAdded_ThenReturn404()
+	{
+		var result = await _client.PostAsJsonAsync("/account/not-an-account", "1000");
+		Assert.Equal(HttpStatusCode.NotFound, result.StatusCode);
+	}
+
+	[Fact]
+	public async Task GivenAccountDoesNotExist_WhenWithdrawalIsAdded_ThenReturn404()
+	{
+		var result = await _client.PostAsJsonAsync("/account/not-an-account/withdraw", "100");
+		Assert.Equal(HttpStatusCode.NotFound, result.StatusCode);
+	}
+
+	[Theory]
+	[InlineData("account-a", "not-an-account")]
+	[InlineData("not-an-account", "account-a")]
+	public async Task GivenAccountDoesNotExist_WhenTransferIsMade_Return404(string debtorAccountIdentified, string creditorAccountIdentified)
+	{
+		var result = await _client.PostAsJsonAsync("/account/transfer", new AccountTransferDto(debtorAccountIdentified, creditorAccountIdentified, 1000));
+		Assert.Equal(HttpStatusCode.NotFound, result.StatusCode);
 	}
 }

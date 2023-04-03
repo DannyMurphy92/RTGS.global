@@ -6,4 +6,5 @@ public interface IAccountProvider
 	void Deposit(string accountIdentifier, decimal amount);
 
 	void Withdraw(string accountIdentifier, decimal amount);
+	bool AccountExists(string accountIdentifier);
 }

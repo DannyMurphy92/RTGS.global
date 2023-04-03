@@ -19,6 +19,11 @@ public class AccountController : ControllerBase
 	[HttpPost("{accountIdentifier}", Name = "Deposit")]
 	public IActionResult Deposit(string accountIdentifier, [FromBody] decimal amount)
 	{
+		if (!DoesAccountExist(accountIdentifier))
+		{
+			return NotFound($"Account {accountIdentifier} not found");
+		}
+
 		_accountProvider.Deposit(accountIdentifier, amount);
 		return Ok();
 	}
@@ -26,6 +31,10 @@ public class AccountController : ControllerBase
 	[HttpPost("{accountIdentifier}/withdraw", Name = "Withdrawal")]
 	public IActionResult Withdraw(string accountIdentifier, [FromBody] decimal amount)
 	{
+		if (!DoesAccountExist(accountIdentifier))
+		{
+			return NotFound($"Account {accountIdentifier} not found");
+		}
 		_accountProvider.Withdraw(accountIdentifier, amount);
 		return Ok();
 	}
@@ -33,12 +42,32 @@ public class AccountController : ControllerBase
 	[HttpPost("transfer", Name = "Transfer")]
 	public IActionResult Transfer(AccountTransferDto transfer)
 	{
+		if (!DoesAccountExist(transfer.CreditorAccountIdentifier))
+		{
+			return NotFound($"Account {transfer.CreditorAccountIdentifier} not found");
+		}
+
+		if (!DoesAccountExist(transfer.DebtorAccountIdentifier))
+		{
+			return NotFound($"Account {transfer.DebtorAccountIdentifier} not found");
+		}
+
 		_transferService.Transfer(transfer);
 		return Accepted();
 	}
 
 	[HttpGet("{accountIdentifier}", Name = "GetBalance")]
-	public AccountBalance Get(string accountIdentifier) => _accountProvider.GetBalance(accountIdentifier);
+	public IActionResult Get(string accountIdentifier)
+	{
+		if (!DoesAccountExist(accountIdentifier))
+		{
+			return NotFound($"Account {accountIdentifier} not found");
+		}
+		var balance = _accountProvider.GetBalance(accountIdentifier);
+		return Ok(balance);
+	}
+
+	private bool DoesAccountExist(string accountIdentifier) => _accountProvider.AccountExists(accountIdentifier);
 }
 
 
