@@ -24,6 +24,11 @@ public class AccountController : ControllerBase
 			return NotFound($"Account {accountIdentifier} not found");
 		}
 
+		if (amount < 0)
+		{
+			return BadRequest("Cannot deposit negative amount");
+		}
+
 		_accountProvider.Deposit(accountIdentifier, amount);
 		return Ok();
 	}
@@ -50,6 +55,11 @@ public class AccountController : ControllerBase
 		if (!DoesAccountExist(transfer.DebtorAccountIdentifier))
 		{
 			return NotFound($"Account {transfer.DebtorAccountIdentifier} not found");
+		}
+
+		if (transfer.CreditorAccountIdentifier == transfer.DebtorAccountIdentifier)
+		{
+			return BadRequest("Cannot transfer between the same account");
 		}
 
 		_transferService.Transfer(transfer);

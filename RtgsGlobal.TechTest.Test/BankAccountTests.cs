@@ -102,4 +102,19 @@ public class BankAccountTests : IClassFixture<WebApplicationFactory<Program>>
 		var result = await _client.PostAsJsonAsync("/account/transfer", new AccountTransferDto(debtorAccountIdentified, creditorAccountIdentified, 1000));
 		Assert.Equal(HttpStatusCode.NotFound, result.StatusCode);
 	}
+
+	[Fact]
+	public async Task GivenAccountExists_WhenNegativeDepositIsAdded_ThenGetBadRequestShouldBeReturned()
+	{
+		var result = await _client.PostAsJsonAsync("/account/account-a", "-1000");
+		Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+	}
+
+	[Fact]
+	public async Task GivenAccountExists_WhenTransferIsMadeToAndFromSameAccount_ThenReturnBadRequest()
+	{
+		var result = await _client.PostAsJsonAsync("/account/transfer", new AccountTransferDto("account-a", "account-a", 1000));
+		Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+	}
+
 }
